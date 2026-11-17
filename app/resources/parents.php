@@ -1,0 +1,31 @@
+<?php
+return [
+    'table' => 'parents', 'title' => 'Parents & Guardians', 'singular' => 'Parent', 'icon' => 'bi-person-hearts', 'group' => 'Students',
+    'perm' => ['view' => 'students.edit', 'manage' => 'students.edit', 'delete' => 'students.delete'], 'can_create' => false,
+    'intro' => 'Parent records are created during admission. Siblings share one parent record and one portal login.',
+    'from' => 'parents t LEFT JOIN users u ON u.id=t.user_id',
+    'select' => "t.*, u.username, (SELECT GROUP_CONCAT(CONCAT(s.first_name,' (',s.reg_no,')') SEPARATOR ', ') FROM students s WHERE s.parent_id=t.id) AS children",
+    'order' => 't.father_name', 'search' => ['t.father_name', 't.father_cnic', 't.father_phone', 't.mother_name', 't.guardian_name'],
+    'columns' => [
+        'father_name' => ['Father / Guardian', 'render' => fn($r) => '<div class="fw-semibold">' . e($r['father_name']) . '</div><div class="small text-muted">' . e($r['father_cnic']) . '</div>'],
+        'father_phone' => ['Phone'], 'mother_name' => ['Mother'], 'children' => ['Children', 'sort' => false],
+        'username' => ['Portal Login', 'sort' => 'u.username', 'render' => fn($r) => $r['username'] ? '<span class="badge text-bg-success badge-soft">' . e($r['username']) . '</span>' : '<span class="text-muted small">' . e(t('None')) . '</span>'],
+    ],
+    'fields' => [
+        'father_name' => ['label' => "Father's Name", 'rules' => 'required|max:120'],
+        'father_cnic' => ['label' => "Father's CNIC", 'rules' => 'cnic', 'unique' => true],
+        'father_phone' => ['label' => "Father's Phone", 'rules' => 'phone'],
+        'father_occupation' => ['label' => "Father's Occupation", 'rules' => 'max:100'],
+        'mother_name' => ['label' => "Mother's Name", 'rules' => 'max:120'],
+        'mother_cnic' => ['label' => "Mother's CNIC", 'rules' => 'cnic'],
+        'mother_phone' => ['label' => "Mother's Phone", 'rules' => 'phone'],
+        'mother_occupation' => ['label' => "Mother's Occupation", 'rules' => 'max:100'],
+        'guardian_name' => ['label' => 'Guardian Name', 'rules' => 'max:120'],
+        'guardian_relation' => ['label' => 'Guardian Relation', 'rules' => 'max:50'],
+        'guardian_phone' => ['label' => 'Guardian Phone', 'rules' => 'phone'],
+        'email' => ['label' => 'Email', 'type' => 'email'],
+        'address' => ['label' => 'Address', 'type' => 'textarea', 'col' => 12, 'rows' => 2],
+    ],
+    'row_actions' => fn($r) => '<button class="btn btn-sm btn-outline-success" title="' . e(t('Create / reset portal login')) . '" data-post="' . e(url('students/parent_login')) . '" data-field-id="' . (int)$r['id'] . '" data-confirm-text="' . e(t('Create or reset the parent portal login? A new password will be shown once.')) . '"><i class="bi bi-key"></i></button> ',
+    'before_delete' => fn($id) => DB::val('SELECT COUNT(*) FROM students WHERE parent_id=?', [$id]) ? 'This parent has children enrolled and cannot be deleted.' : null,
+];

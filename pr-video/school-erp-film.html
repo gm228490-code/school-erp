@@ -1,0 +1,625 @@
+<meta charset="utf-8">
+<title>School ERP Film</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;600&family=Kalam:wght@400;700&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap">
+<style>
+/* Layout: one cinematic column, the film as the hero, controls and PR steps beneath. Single dark look on purpose (a classroom chalkboard at dawn). */
+:root {
+  --bg: #0b100e;
+  --panel: #131b18;
+  --fg: #ece7da;
+  --muted: #9aa69f;
+  --line: #26322d;
+  --accent: #f0a35a;
+  --accent-ink: #1b130b;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: Inter, "Segoe UI", system-ui, sans-serif;
+  --chalk: Kalam, "Segoe Print", cursive;
+  color-scheme: dark;
+}
+html { background: var(--bg); }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; margin: 0; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 40px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+.eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0 0 6px; font-weight: 600; }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(32px, 5vw, 52px); line-height: 1.02; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 62ch; margin: 10px 0 0; font-size: 16px; }
+.stage { margin: 0; position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: #000; aspect-ratio: 16 / 9; max-width: 100%; }
+canvas { display: block; width: 100%; height: 100%; }
+#bigplay { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 600 16px var(--body); background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 999px; padding: 14px 24px; cursor: pointer; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.btn, button.ctl { font: 600 14px var(--body); background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 16px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+button.ctl.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button.ctl:disabled { opacity: .5; cursor: default; }
+.btn:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.rec-dot { width: 9px; height: 9px; border-radius: 50%; background: #e0524a; display: inline-block; }
+label.snd { display: inline-flex; gap: 8px; align-items: center; color: var(--muted); cursor: pointer; }
+.scrub { flex: 1 1 220px; display: flex; gap: 10px; align-items: center; min-width: 0; }
+.scrub input { flex: 1; min-width: 0; accent-color: var(--accent); }
+#time { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; }
+#status { margin: 0; color: var(--muted); min-height: 1.5em; }
+#out { display: grid; gap: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+#out video { width: 100%; max-width: 100%; border-radius: 8px; background: #000; }
+.how { border-top: 1px solid var(--line); padding-top: 22px; display: grid; gap: 10px; }
+.how h2 { font-family: var(--display); font-weight: 600; font-size: 22px; margin: 0; }
+.how ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; max-width: 70ch; }
+.how code { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 13px; word-break: break-all; }
+.note { color: var(--muted); font-size: 13px; max-width: 70ch; margin: 0; }
+</style>
+
+<main class="wrap">
+  <header>
+    <p class="eyebrow">Pull request film · 50 seconds · 1280×720</p>
+    <h1>School ERP Film</h1>
+    <p class="lede">A short story for the pull request: the teacher with 42 registers, the father waiting in line, and the morning the school finally gets to breathe.</p>
+  </header>
+
+  <figure class="stage">
+    <canvas id="film" width="1280" height="720" aria-label="School ERP film"></canvas>
+    <button id="bigplay" type="button">▶ Play with sound</button>
+  </figure>
+
+  <div class="controls">
+    <button id="play" class="ctl primary" type="button">Play</button>
+    <button id="rec" class="ctl" type="button"><span class="rec-dot"></span>Record video</button>
+    <label class="snd"><input id="snd" type="checkbox" checked> Music</label>
+    <div class="scrub">
+      <input id="scrub" type="range" min="0" max="50" step="0.1" value="48" aria-label="Seek">
+      <span id="time">0:48 / 0:50</span>
+    </div>
+  </div>
+  <p id="status" role="status"></p>
+
+  <div id="out" hidden>
+    <video id="vid" controls playsinline></video>
+    <div class="controls">
+      <a id="dl" class="btn" href="#">Download video</a>
+      <span id="outinfo" class="note"></span>
+    </div>
+  </div>
+
+  <section class="how">
+    <h2>Put it in your pull request</h2>
+    <ol>
+      <li>Open <code>pr-video/school-erp-film.html</code> from your computer in Chrome or Edge (double-click the file).</li>
+      <li>Click <strong>Record video</strong> and keep the tab in front for the full 50 seconds. The film plays once and records itself, music included.</li>
+      <li>Click <strong>Download video</strong>. You get an <code>.mp4</code> (or <code>.webm</code> on older browsers), about 8 MB.</li>
+      <li>On GitHub, drag the file into the pull request description or a comment. GitHub uploads it and shows a player.</li>
+    </ol>
+    <p class="note">Recording and downloading work only when the file is opened locally; the hosted preview can play the film but cannot save files.</p>
+  </section>
+</main>
+
+<script>
+(() => {
+const W = 1280, H = 720, DUR = 50;
+const cv = document.getElementById('film');
+const ctx = cv.getContext('2d');
+
+const CHALK = 'rgba(241,237,226,0.94)';
+const CHALK_DIM = 'rgba(241,237,226,0.45)';
+const AMBER = '#f0a35a';
+const INK = '#1d2a24';
+const INK_SOFT = '#4f5c55';
+const PAPER = '#f4efe2';
+const GREEN = '#2f8f5b', RED = '#c4453c', GOLD = '#d98b2b';
+const F_DISPLAY = '"Bricolage Grotesque", "Segoe UI", sans-serif';
+const F_BODY = 'Inter, "Segoe UI", sans-serif';
+const F_CHALK = 'Kalam, "Segoe Print", cursive';
+const F_URDU = '"Noto Nastaliq Urdu", "Jameel Noori Nastaleeq", "Urdu Typesetting", serif';
+
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const p = (t, a, b) => clamp((t - a) / (b - a));
+const eo = x => 1 - Math.pow(1 - x, 3);
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const vis = (t, a, b, fi = .6, fo = .6) => Math.min(p(t, a, a + fi), 1 - p(t, b - fo, b));
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let r = Math.imul(seed ^ seed >>> 15, 1 | seed); r = r + Math.imul(r ^ r >>> 7, 61 | r) ^ r; return ((r ^ r >>> 14) >>> 0) / 4294967296; }; }
+const rnd = rng(1947);
+
+function rr(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function wrapLines(str, maxW) {
+  const words = str.split(' '); const lines = []; let cur = '';
+  for (const w of words) {
+    const test = cur ? cur + ' ' + w : w;
+    if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; } else cur = test;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+/* Typed text: reveals characters between times a and b. */
+function chalk(str, x, y, o) {
+  const { t = 99, a = -1, b = 0, size = 44, align = 'left', maxW = 1100, lh = 1.3, alpha = 1, color = CHALK, font = F_CHALK, weight = 400, glow = true } = o;
+  if (alpha <= 0) return;
+  ctx.save();
+  ctx.font = `${weight} ${size}px ${font}`;
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.globalAlpha *= alpha; ctx.fillStyle = color;
+  if (glow) { ctx.shadowColor = 'rgba(255,255,255,.22)'; ctx.shadowBlur = 3; }
+  const lines = wrapLines(str, maxW);
+  let n = Math.floor((str.length + 1) * p(t, a, b));
+  lines.forEach((ln, i) => {
+    if (n <= 0) return;
+    const s = ln.slice(0, n); n -= ln.length + 1;
+    const full = ctx.measureText(ln).width;
+    const lx = align === 'center' ? x - full / 2 : align === 'right' ? x - full : x;
+    ctx.fillText(s, lx, y + i * size * lh);
+  });
+  ctx.restore();
+}
+function text(str, x, y, font, color, align = 'left', alpha = 1, extra) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  if (extra) extra();
+  ctx.fillText(str, x, y); ctx.restore();
+}
+function urdu(str, x, y, size, color, align = 'center', alpha = 1) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.direction = 'rtl'; ctx.font = `400 ${size}px ${F_URDU}`;
+  ctx.fillStyle = color; ctx.textAlign = align; ctx.fillText(str, x, y); ctx.restore();
+}
+
+/* ---------- Board background ---------- */
+const smudge = document.createElement('canvas'); smudge.width = W; smudge.height = H;
+(() => {
+  const s = smudge.getContext('2d'); const r = rng(7);
+  for (let i = 0; i < 46; i++) {
+    s.strokeStyle = `rgba(255,255,255,${0.012 + r() * 0.02})`;
+    s.lineWidth = 30 + r() * 90; s.lineCap = 'round';
+    const x = r() * W, y = r() * H, len = 120 + r() * 380;
+    s.beginPath(); s.moveTo(x, y);
+    s.quadraticCurveTo(x + len / 2, y + (r() - .5) * 120, x + len, y + (r() - .5) * 60); s.stroke();
+  }
+  for (let i = 0; i < 2600; i++) { s.fillStyle = `rgba(255,255,255,${r() * 0.05})`; s.fillRect(r() * W, r() * H, 1.4, 1.4); }
+})();
+const dust = Array.from({ length: 70 }, () => ({ x: rnd() * W, y: rnd() * H, r: .6 + rnd() * 1.8, v: 6 + rnd() * 16, ph: rnd() * 6.28, a: .06 + rnd() * .2 }));
+
+function bg(t) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#17231f'); g.addColorStop(1, '#0b1210');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const s = eo(p(t, 16.5, 23)) * (1 - 0.3 * p(t, 35, 37)) + 0.3 * p(t, 42, 46);
+  if (s > 0) {
+    const r = ctx.createRadialGradient(W / 2, H + 160, 20, W / 2, H + 160, 980);
+    r.addColorStop(0, `rgba(255,178,92,${0.6 * s})`);
+    r.addColorStop(.42, `rgba(214,110,66,${0.24 * s})`);
+    r.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = r; ctx.fillRect(0, 0, W, H);
+  }
+  ctx.drawImage(smudge, 0, 0);
+  dust.forEach(d => {
+    const y = ((d.y - t * d.v) % H + H) % H;
+    const x = d.x + Math.sin(t * .5 + d.ph) * 14;
+    ctx.fillStyle = s > .2 ? `rgba(255,214,160,${d.a + .1 * s})` : `rgba(255,255,255,${d.a})`;
+    ctx.beginPath(); ctx.arc(x, y, d.r, 0, 6.283); ctx.fill();
+  });
+  const v = ctx.createRadialGradient(W / 2, H / 2, 260, W / 2, H / 2, 820);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.6)');
+  ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+}
+
+/* ---------- Scene 1: dawn ---------- */
+function s1(t) {
+  const al = 1 - p(t, 4.9, 5.6);
+  chalk('6:45 AM', W / 2, 310, { t, a: .5, b: 1.4, size: 120, align: 'center', font: F_DISPLAY, weight: 800, alpha: al, glow: false });
+  chalk('Every morning, a school wakes up.', W / 2, 410, { t, a: 1.8, b: 3.5, size: 48, align: 'center', alpha: al });
+  const u = eo(p(t, 3.5, 4.2));
+  if (u > 0) {
+    ctx.save(); ctx.globalAlpha = al * .85; ctx.strokeStyle = AMBER; ctx.lineWidth = 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(W / 2 - 250, 440);
+    for (let i = 0; i <= 20; i++) { const k = i / 20 * u; ctx.lineTo(W / 2 - 250 + 500 * k, 440 + Math.sin(k * 9) * 2.2); }
+    ctx.stroke(); ctx.restore();
+  }
+}
+
+/* ---------- Scene 2: the paper pile ---------- */
+const REG_COLORS = ['#7a3b2e', '#2f4a6b', '#5b5e2e', '#6b2f4a', '#3f5f55', '#7a5a2e'];
+const papers = Array.from({ length: 18 }, (_, i) => ({ x: 900 + (rnd() - .5) * 150, rot: (rnd() - .5) * .3, t0: 5.9 + i * .22, c: REG_COLORS[i % REG_COLORS.length], cls: `Class ${1 + (i % 10)}-${'ABC'[i % 3]}` }));
+function drawRegister(pp) {
+  const w = 230, h = 46;
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-w / 2 + 4, -h / 2 + 6, w, h);
+  ctx.fillStyle = '#efe7d2'; ctx.fillRect(-w / 2 + 6, -h / 2 + 4, w - 6, h - 6);
+  ctx.fillStyle = pp.c; ctx.fillRect(-w / 2, -h / 2, w, h - 10);
+  ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillRect(-w / 2 + 14, -h / 2 + 8, 92, 20);
+  ctx.fillStyle = '#222'; ctx.font = `600 12px ${F_BODY}`; ctx.textAlign = 'left'; ctx.fillText(pp.cls, -w / 2 + 20, -h / 2 + 22);
+  ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(w / 2 - 34, -h / 2, 8, h - 10);
+}
+function s2(t) {
+  const al = vis(t, 5.4, 11.7, .5, .6); if (al <= 0) return;
+  ctx.save(); ctx.globalAlpha = al;
+  papers.forEach((pp, i) => {
+    const k = p(t, pp.t0, pp.t0 + .6); if (k <= 0) return;
+    const yEnd = 640 - i * 34; const y = -80 + (yEnd + 80) * eo(k);
+    ctx.save(); ctx.translate(pp.x, y); ctx.rotate(pp.rot * (1.6 - k)); drawRegister(pp); ctx.restore();
+  });
+  ctx.restore();
+  chalk('Ms. Ayesha keeps 42 attendance registers.', 110, 190, { t, a: 6.0, b: 7.6, size: 44, maxW: 560, alpha: al });
+  chalk('Mr. Rashid adds up fee receipts by hand.', 110, 360, { t, a: 8.1, b: 9.6, size: 44, maxW: 560, alpha: al });
+  chalk('Again.', 110, 530, { t, a: 10.0, b: 10.3, size: 44, alpha: al, color: AMBER });
+}
+
+/* ---------- Scene 3: the queue ---------- */
+function person(x, y, hi, a) {
+  ctx.save(); ctx.globalAlpha *= a;
+  ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.strokeStyle = hi ? AMBER : CHALK_DIM;
+  ctx.fillStyle = hi ? 'rgba(240,163,90,.16)' : 'rgba(255,255,255,.03)';
+  ctx.beginPath(); ctx.arc(x, y - 160, 24, 0, 6.283); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x - 42, y); ctx.lineTo(x - 42, y - 82); ctx.quadraticCurveTo(x - 42, y - 124, x, y - 124);
+  ctx.quadraticCurveTo(x + 42, y - 124, x + 42, y - 82); ctx.lineTo(x + 42, y); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+function s3(t) {
+  const al = vis(t, 11.4, 16.6, .5, .6); if (al <= 0) return;
+  ctx.save(); ctx.globalAlpha = al;
+  ctx.strokeStyle = CHALK_DIM; ctx.lineWidth = 3; ctx.strokeRect(80, 330, 150, 270);
+  ctx.strokeRect(100, 360, 110, 80);
+  ctx.restore();
+  text('OFFICE', 155, 312, `700 24px ${F_CHALK}`, CHALK_DIM, 'center', al);
+  text('Closes 1:00 PM', 155, 480, `400 18px ${F_CHALK}`, CHALK_DIM, 'center', al);
+  const shift = eio(p(t, 11.5, 16.5)) * 60;
+  for (let i = 0; i < 8; i++) {
+    const x = 330 + i * 112 - shift * (i < 1 ? .2 : 1);
+    const bob = Math.sin(t * 1.8 + i) * 1.5;
+    person(x, 600 + bob, i === 5, 1);
+  }
+  ctx.save(); ctx.globalAlpha = al; ctx.strokeStyle = CHALK_DIM; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(60, 602); ctx.lineTo(W - 60, 602); ctx.stroke(); ctx.restore();
+  chalk('A father takes a day off work and waits in line,', W / 2, 140, { t, a: 11.9, b: 13.5, size: 42, align: 'center', alpha: al });
+  chalk('just to ask: “How is my son doing?”', W / 2, 205, { t, a: 13.8, b: 15.2, size: 42, align: 'center', alpha: al, color: AMBER });
+}
+
+/* ---------- Scene 4: the turn ---------- */
+function s4(t) {
+  const al = vis(t, 16.6, 21.2, .7, .6);
+  chalk('What if the school could breathe?', W / 2, H / 2 + 10, { t, a: 17.2, b: 19.0, size: 66, align: 'center', alpha: al });
+}
+
+/* ---------- Scene 5: what changes ---------- */
+function illAttendance(x, y, w, h, lp) {
+  text('Class 5-B  ·  Tuesday, 17 Nov', x + 20, y + 4, `600 14px ${F_BODY}`, INK_SOFT);
+  const absent = new Set([7, 23]), leave = new Set([15, 31]);
+  const shown = Math.floor(lp * 46);
+  let P = 0, A = 0, L = 0;
+  for (let i = 0; i < 42; i++) {
+    const c = i % 7, r = Math.floor(i / 7);
+    const cx = x + 40 + c * 50, cy = y + 44 + r * 44;
+    ctx.beginPath(); ctx.arc(cx, cy, 16, 0, 6.283);
+    if (i < shown) {
+      const col = absent.has(i) ? RED : leave.has(i) ? GOLD : GREEN;
+      if (absent.has(i)) A++; else if (leave.has(i)) L++; else P++;
+      ctx.fillStyle = col; ctx.fill();
+      text(absent.has(i) ? 'A' : leave.has(i) ? 'L' : 'P', cx, cy + 5, `600 13px ${F_BODY}`, '#fff', 'center');
+    } else { ctx.strokeStyle = '#cfc6b1'; ctx.lineWidth = 2; ctx.stroke(); }
+  }
+  text(`Present ${P}    Absent ${A}    Leave ${L}`, x + 20, y + h - 6, `600 17px ${F_BODY}`, INK, 'left', 1, () => { ctx.font = `600 17px ${F_BODY}`; });
+}
+function illFees(x, y, w, h, lp) {
+  const rx = x + 30, ry = y + 4, rw = w - 60, rh = h - 20;
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.15)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6;
+  ctx.fillStyle = '#fffdf7'; rr(rx, ry, rw, rh, 8); ctx.fill(); ctx.restore();
+  text('FEE RECEIPT', rx + 24, ry + 40, `800 20px ${F_DISPLAY}`, INK);
+  text('RCT-26-00412', rx + rw - 24, ry + 40, `600 14px ${F_BODY}`, INK_SOFT, 'right');
+  text('Ali Raza  ·  Class 7-A  ·  Reg 2024-0187', rx + 24, ry + 68, `400 14px ${F_BODY}`, INK_SOFT);
+  const rows = [['Tuition fee · November', 3800], ['Transport · Route 3', 700]];
+  rows.forEach(([k, v], i) => {
+    const yy = ry + 120 + i * 40; const a = p(lp, .05 + i * .15, .2 + i * .15);
+    text(k, rx + 24, yy, `400 16px ${F_BODY}`, INK, 'left', a);
+    text('Rs ' + v.toLocaleString('en-US'), rx + rw - 24, yy, `600 16px ${F_BODY}`, INK, 'right', a);
+  });
+  ctx.save(); ctx.setLineDash([5, 5]); ctx.strokeStyle = '#c9c0ab'; ctx.beginPath(); ctx.moveTo(rx + 24, ry + 196); ctx.lineTo(rx + rw - 24, ry + 196); ctx.stroke(); ctx.restore();
+  const total = Math.round(4500 * eo(p(lp, .3, .6)) / 10) * 10;
+  text('Total paid', rx + 24, ry + 240, `600 18px ${F_BODY}`, INK);
+  text('Rs ' + total.toLocaleString('en-US'), rx + rw - 24, ry + 244, `800 30px ${F_DISPLAY}`, INK, 'right');
+  const s = p(lp, .62, .78);
+  if (s > 0) {
+    ctx.save(); ctx.translate(rx + rw / 2, ry + 296); ctx.rotate(-.16); const sc = 1.6 - .6 * eo(s); ctx.scale(sc, sc); ctx.globalAlpha = s;
+    ctx.strokeStyle = GREEN; ctx.lineWidth = 4; rr(-70, -24, 140, 48, 6); ctx.stroke();
+    text('PAID', 0, 12, `800 32px ${F_DISPLAY}`, GREEN, 'center'); ctx.restore();
+  }
+}
+function illResults(x, y, w, h, lp) {
+  text('Ali Raza  ·  Class 7-A  ·  Mid-term', x + 10, y + 4, `600 14px ${F_BODY}`, INK_SOFT);
+  const subs = [['English', 82], ['Urdu', 91], ['Mathematics', 87], ['Science', 78], ['Islamiyat', 94]];
+  subs.forEach(([s, v], i) => {
+    const yy = y + 46 + i * 54; const k = eo(p(lp, i * .09, i * .09 + .45));
+    text(s, x + 10, yy + 20, `400 16px ${F_BODY}`, INK);
+    ctx.fillStyle = '#e5ddc9'; rr(x + 130, yy + 4, 190, 22, 11); ctx.fill();
+    if (k > 0) { ctx.fillStyle = '#2f6f5a'; rr(x + 130, yy + 4, Math.max(22, 190 * v / 100 * k), 22, 11); ctx.fill(); }
+    text(String(Math.round(v * k)), x + w - 10, yy + 21, `600 16px ${F_BODY}`, INK, 'right');
+  });
+  const a = p(lp, .7, .85);
+  text('432 / 500  ·  86.4%  ·  Grade A  ·  Position 3rd', x + 10, y + h - 4, `600 16px ${F_BODY}`, '#2f6f5a', 'left', a);
+}
+function phone(cx, cy, pw, ph, notes, t0set, t, bigTime) {
+  const x = cx - pw / 2, y = cy - ph / 2;
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 12;
+  ctx.fillStyle = '#0f1513'; rr(x, y, pw, ph, pw * .14); ctx.fill(); ctx.restore();
+  ctx.strokeStyle = '#3d4b45'; ctx.lineWidth = 2; rr(x, y, pw, ph, pw * .14); ctx.stroke();
+  const g = ctx.createLinearGradient(0, y, 0, y + ph); g.addColorStop(0, '#26352f'); g.addColorStop(1, '#3a2a1d');
+  ctx.fillStyle = g; rr(x + 8, y + 8, pw - 16, ph - 16, pw * .12); ctx.fill();
+  ctx.fillStyle = '#0f1513'; rr(cx - pw * .17, y + 16, pw * .34, 18, 9); ctx.fill();
+  if (bigTime) {
+    text('8:02', cx, y + ph * .22, `600 ${Math.round(pw * .24)}px ${F_DISPLAY}`, 'rgba(255,255,255,.92)', 'center');
+    text('Tuesday, 17 November', cx, y + ph * .22 + 28, `400 ${Math.round(pw * .05)}px ${F_BODY}`, 'rgba(255,255,255,.7)', 'center');
+  }
+  notes.forEach((n, i) => {
+    const k = eo(p(t, t0set[i], t0set[i] + .5)); if (k <= 0) return;
+    const nh = pw * .3, nw = pw - 32, nx = x + 16, ny = y + (bigTime ? ph * .34 : 56) + i * (nh + 12) - (1 - k) * 30;
+    ctx.save(); ctx.globalAlpha *= k;
+    ctx.fillStyle = 'rgba(250,247,240,.95)'; rr(nx, ny, nw, nh, 14); ctx.fill();
+    ctx.fillStyle = n.c; ctx.beginPath(); ctx.arc(nx + 20, ny + 22, 7, 0, 6.283); ctx.fill();
+    text('SCHOOL ERP  ·  now', nx + 36, ny + 27, `600 ${Math.round(pw * .042)}px ${F_BODY}`, INK_SOFT);
+    ctx.font = `600 ${Math.round(pw * .055)}px ${F_BODY}`;
+    const lines = wrapLines(n.t, nw - 32);
+    lines.slice(0, 2).forEach((ln, j) => text(ln, nx + 16, ny + 54 + j * pw * .068, `600 ${Math.round(pw * .055)}px ${F_BODY}`, INK));
+    ctx.restore();
+  });
+}
+function illPhoneMini(x, y, w, h, lp) {
+  phone(x + w / 2, y + h / 2 - 6, 220, 360, [
+    { t: 'Ali was marked present, 8:02 AM', c: GREEN },
+    { t: 'Homework: Science, page 42', c: GOLD },
+    { t: 'Fee receipt RCT-26-00412', c: '#2f6f5a' },
+  ], [.05, .35, .65], lp, false);
+}
+function illUrdu(x, y, w, h, lp) {
+  const words = ['حاضری', 'فیس', 'نتائج', 'ہوم ورک'];
+  const en = ['Attendance', 'Fees', 'Results', 'Homework'];
+  words.forEach((wd, i) => {
+    const a = p(lp, i * .15, i * .15 + .25);
+    urdu(wd, x + w - 20, y + 60 + i * 84, 40, INK, 'right', a);
+    text(en[i], x + 20, y + 52 + i * 84, `400 16px ${F_BODY}`, INK_SOFT, 'left', a);
+    if (i < 3) { ctx.save(); ctx.globalAlpha = a * .5; ctx.strokeStyle = '#d8cfba'; ctx.beginPath(); ctx.moveTo(x + 20, y + 92 + i * 84); ctx.lineTo(x + w - 20, y + 92 + i * 84); ctx.stroke(); ctx.restore(); }
+  });
+}
+const MODULES = ['Library', 'Transport', 'Timetable', 'Homework', 'Payroll', 'HR & leave', 'SMS & email', 'ID cards', 'Certificates', 'Backups', 'Reports', 'Roles & permissions', 'Excel / CSV', 'Promotion'];
+function illChips(x, y, w, h, lp) {
+  ctx.font = `600 15px ${F_BODY}`;
+  let cx = x + 10, cy = y + 10;
+  MODULES.forEach((m, i) => {
+    const cw = ctx.measureText(m).width + 30;
+    if (cx + cw > x + w) { cx = x + 10; cy += 52; }
+    const k = eo(p(lp, i * .05, i * .05 + .25));
+    if (k > 0) {
+      ctx.save(); ctx.translate(cx + cw / 2, cy + 20); ctx.scale(.7 + .3 * k, .7 + .3 * k); ctx.globalAlpha = k;
+      ctx.fillStyle = i % 4 === 0 ? '#2f6f5a' : '#e5ddc9'; rr(-cw / 2, -20, cw, 40, 20); ctx.fill();
+      text(m, 0, 5, `600 15px ${F_BODY}`, i % 4 === 0 ? '#fff' : INK, 'center'); ctx.restore();
+    }
+    cx += cw + 10;
+  });
+}
+const FEATS = [
+  { k: 'Attendance', title: 'One tap, and every child is counted.', cap: 'Present, absent, leave or late, with an SMS to parents when a child is missing.', draw: illAttendance },
+  { k: 'Fees', title: 'Invoices, receipts and challans in rupees.', cap: 'Monthly fees, discounts, late fines and partial payments in one ledger.', draw: illFees },
+  { k: 'Examinations', title: 'Report cards in seconds, not weekends.', cap: 'Marks entry, grades, positions and class result sheets, worked out for you.', draw: illResults },
+  { k: 'Parent portal', title: 'Parents see what teachers see.', cap: 'Attendance, results, homework and fee receipts on their own phone.', draw: illPhoneMini },
+  { k: 'اردو', urdu: true, title: 'Urdu, right to left, built in.', cap: 'Switch any screen to Urdu without losing a thing.', draw: illUrdu },
+  { k: 'And the rest', title: 'Everything a school runs on.', cap: '20+ modules on plain PHP 8.2 and MySQL. Runs on XAMPP or any shared host.', draw: illChips },
+];
+const S5 = 21.2, SL = 2.3, S5E = S5 + FEATS.length * SL;
+function drawCard(f, lp) {
+  const x = 190, y = 140, w = 900, h = 470;
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 18;
+  ctx.fillStyle = PAPER; rr(x, y, w, h, 18); ctx.fill(); ctx.restore();
+  if (f.urdu) urdu(f.k, x + 50, y + 76, 26, '#b5652a', 'left');
+  else text(f.k.toUpperCase(), x + 50, y + 70, `600 14px ${F_BODY}`, '#b5652a', 'left', 1, () => { try { ctx.letterSpacing = '2px'; } catch (e) {} });
+  ctx.font = `800 40px ${F_DISPLAY}`;
+  const tl = wrapLines(f.title, 360);
+  tl.forEach((ln, i) => text(ln, x + 50, y + 130 + i * 46, `800 40px ${F_DISPLAY}`, INK));
+  ctx.font = `400 18px ${F_BODY}`;
+  const cl = wrapLines(f.cap, 360);
+  cl.forEach((ln, i) => text(ln, x + 50, y + 150 + tl.length * 46 + i * 27, `400 18px ${F_BODY}`, INK_SOFT));
+  f.draw(x + 470, y + 56, 390, 370, lp);
+}
+function s5(t) {
+  if (t < S5 - .1 || t > S5E + .7) return;
+  const hal = vis(t, S5, S5E + .6, .5, .6);
+  chalk('Introducing School ERP', W / 2, 96, { t, a: S5, b: S5 + .9, size: 36, align: 'center', alpha: hal, color: AMBER });
+  FEATS.forEach((f, i) => {
+    const s = S5 + i * SL, e = s + SL, last = i === FEATS.length - 1;
+    if (t < s - .05 || t > e + .6) return;
+    const enter = eo(p(t, s, s + .55));
+    const exit = last ? 0 : eio(p(t, e, e + .5));
+    const dx = (1 - enter) * 900 - exit * 900;
+    const a = Math.min(enter, 1 - exit) * (last ? 1 - p(t, e, e + .55) : 1);
+    if (a <= 0) return;
+    ctx.save(); ctx.globalAlpha = a; ctx.translate(dx, 0); drawCard(f, p(t, s + .35, e - .1)); ctx.restore();
+  });
+  FEATS.forEach((f, i) => {
+    const on = t >= S5 + i * SL;
+    ctx.save(); ctx.globalAlpha = hal; ctx.fillStyle = on ? AMBER : CHALK_DIM;
+    ctx.beginPath(); ctx.arc(W / 2 - 50 + i * 20, 650, on ? 5 : 4, 0, 6.283); ctx.fill(); ctx.restore();
+  });
+}
+
+/* ---------- Scene 6: the father, again ---------- */
+function s6(t) {
+  const al = vis(t, 35.0, 42.2, .6, .6); if (al <= 0) return;
+  ctx.save(); ctx.globalAlpha = al;
+  phone(890, 372, 300, 560, [
+    { t: 'Ali Raza was marked present today.', c: GREEN },
+    { t: 'Mid-term result: Mathematics 87% (A).', c: '#2f6f5a' },
+  ], [36.0, 37.4], t, true);
+  ctx.restore();
+  chalk('Now he knows.', 120, 300, { t, a: 36.6, b: 37.5, size: 66, alpha: al });
+  chalk('And he never left work.', 120, 380, { t, a: 38.2, b: 39.6, size: 42, alpha: al, color: AMBER });
+  text('Parent portal  ·  SMS and email alerts', 122, 440, `400 18px ${F_BODY}`, CHALK_DIM, 'left', al * p(t, 39.8, 40.4));
+}
+
+/* ---------- Scene 7: title ---------- */
+function s7(t) {
+  if (t < 42) return;
+  const k = eo(p(t, 42.4, 43.6));
+  text('School ERP', W / 2, 300 + (1 - k) * 22, `800 124px ${F_DISPLAY}`, CHALK, 'center', k);
+  chalk('For the teachers who stay late, and the parents who wait.', W / 2, 384, { t, a: 43.6, b: 45.6, size: 36, align: 'center' });
+  urdu('ہر استاد کے لیے، ہر بچے کے لیے', W / 2, 470, 34, AMBER, 'center', p(t, 45.6, 46.4));
+  text('PHP 8.2  ·  MySQL  ·  Bootstrap 5  ·  50+ tables  ·  Parent & student portal', W / 2, 570, `400 18px ${F_BODY}`, CHALK_DIM, 'center', p(t, 46.3, 47.0));
+  text('PULL REQUEST  ·  READY FOR REVIEW', W / 2, 612, `600 14px ${F_BODY}`, AMBER, 'center', p(t, 46.9, 47.5), () => { try { ctx.letterSpacing = '3px'; } catch (e) {} });
+}
+
+function render(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+  bg(t);
+  if (t < 5.8) s1(t);
+  if (t > 5.2 && t < 11.9) s2(t);
+  if (t > 11.2 && t < 16.8) s3(t);
+  if (t > 16.4 && t < 21.4) s4(t);
+  s5(t);
+  if (t > 34.8 && t < 42.4) s6(t);
+  s7(t);
+  const fade = Math.max(1 - p(t, 0, .9), p(t, 49.2, 50));
+  if (fade > 0) { ctx.globalAlpha = 1; ctx.fillStyle = `rgba(0,0,0,${fade})`; ctx.fillRect(0, 0, W, H); }
+}
+
+/* ---------- Music: soft piano and pad, generated live ---------- */
+let ac = null, recDest = null, acStart = 0;
+const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+const CH = { Am: [57, 60, 64, 45], F: [57, 60, 65, 41], C: [55, 60, 64, 48], G: [55, 59, 62, 43], Dm: [57, 62, 65, 38], E: [56, 59, 64, 40] };
+const PROG = ['Am', 'F', 'C', 'G', 'Am', 'F', 'Dm', 'E', 'C', 'G', 'Am', 'F', 'C', 'G', 'F', 'G', 'C', 'Am', 'F', 'C'];
+function startAudio() {
+  ac = new (window.AudioContext || window.webkitAudioContext)();
+  recDest = ac.createMediaStreamDestination();
+  acStart = ac.currentTime + .08;
+  scheduleMusic(ac, [ac.destination, recDest], acStart);
+}
+function scheduleMusic(ac, outs, T) {
+  const master = ac.createGain(); master.gain.value = 0;
+  const bus = ac.createGain(); bus.gain.value = 1;
+  const dly = ac.createDelay(1); dly.delayTime.value = .31;
+  const fb = ac.createGain(); fb.gain.value = .36;
+  const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
+  bus.connect(master); bus.connect(dly); dly.connect(lp); lp.connect(fb); fb.connect(dly); lp.connect(master);
+  const comp = ac.createDynamicsCompressor();
+  master.connect(comp); outs.forEach(o => comp.connect(o));
+  master.gain.setValueAtTime(0, T); master.gain.linearRampToValueAtTime(.85, T + 2);
+  master.gain.setValueAtTime(.85, T + 48); master.gain.linearRampToValueAtTime(0, T + 50);
+  const bar = 2.5;
+  const osc = (type, f, t0, t1, peak, atk, out = bus) => {
+    const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(peak, t0 + atk); g.gain.exponentialRampToValueAtTime(.0001, t1);
+    o.connect(g); g.connect(out); o.start(t0); o.stop(t1 + .05);
+  };
+  PROG.forEach((name, b) => {
+    const [n1, n2, n3, bass] = CH[name]; const t0 = T + b * bar; const bright = b >= 8;
+    [n1, n2, n3].forEach(n => osc('triangle', mf(n), t0, t0 + bar + .6, bright ? .035 : .028, .7));
+    osc('sine', mf(bass), t0, t0 + bar + .3, .1, .2);
+    const tones = [n1 + 12, n2 + 12, n3 + 12, n2 + 12];
+    const steps = bright ? 8 : 4;
+    for (let s = 0; s < steps; s++) {
+      if (b === PROG.length - 1 && s > 0) break;
+      const ts = t0 + s * bar / steps; const n = bright ? [n1 + 12, n2 + 12, n3 + 12, n1 + 24, n3 + 12, n2 + 12, n1 + 12, n2 + 12][s] : tones[s];
+      const dur = b === PROG.length - 1 ? 3 : 1.6;
+      osc('sine', mf(n), ts, ts + dur, bright ? .07 : .06, .006);
+      osc('triangle', mf(n) * 2, ts, ts + .5, .012, .004);
+    }
+  });
+}
+function stopAudio() { if (ac) { try { ac.close(); } catch (e) {} } ac = null; recDest = null; }
+
+/* ---------- Playback & recording ---------- */
+const $ = id => document.getElementById(id);
+const playBtn = $('play'), recBtn = $('rec'), big = $('bigplay'), scrub = $('scrub'), timeEl = $('time'), statusEl = $('status');
+let playing = false, t0 = 0, recorder = null, chunks = [], lastUrl = null;
+const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+function now() { return ac ? Math.max(0, ac.currentTime - acStart) : (performance.now() - t0) / 1000; }
+function loop() {
+  if (!playing) return;
+  const t = Math.min(now(), DUR);
+  render(t); scrub.value = t.toFixed(1); timeEl.textContent = `${fmt(t)} / ${fmt(DUR)}`;
+  if (t >= DUR) { finish(); return; }
+  requestAnimationFrame(loop);
+}
+function start(record) {
+  stop(false);
+  big.hidden = true;
+  if ($('snd').checked) { try { startAudio(); } catch (e) { stopAudio(); } }
+  t0 = performance.now(); playing = true;
+  playBtn.textContent = 'Stop'; recBtn.disabled = true;
+  if (record) beginRecording();
+  statusEl.textContent = record ? 'Recording. Keep this tab in front until the film ends.' : '';
+  requestAnimationFrame(loop);
+}
+function stop(fromUser) {
+  playing = false; stopAudio();
+  playBtn.textContent = 'Play'; recBtn.disabled = false;
+  if (recorder && recorder.state !== 'inactive') { recorder.__cancel = fromUser; recorder.stop(); }
+}
+function finish() {
+  playing = false;
+  const r = recorder;
+  setTimeout(() => { if (r && r.state !== 'inactive') r.stop(); stopAudio(); }, 250);
+  playBtn.textContent = 'Replay'; recBtn.disabled = false;
+}
+function pickType() {
+  const types = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  if (!window.MediaRecorder) return null;
+  return types.find(x => MediaRecorder.isTypeSupported(x)) || '';
+}
+function beginRecording() {
+  const type = pickType();
+  if (type === null || !cv.captureStream) { statusEl.textContent = 'This browser cannot record the canvas. Use Chrome or Edge.'; return; }
+  const stream = cv.captureStream(30);
+  if (recDest) recDest.stream.getAudioTracks().forEach(tr => stream.addTrack(tr));
+  chunks = [];
+  try { recorder = new MediaRecorder(stream, type ? { mimeType: type, videoBitsPerSecond: 1200000, audioBitsPerSecond: 128000 } : undefined); }
+  catch (e) { statusEl.textContent = 'Recording could not start in this browser.'; recorder = null; return; }
+  recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  recorder.onstop = () => {
+    const rec = recorder; recorder = null;
+    if (rec.__cancel) { statusEl.textContent = 'Recording stopped before the end, so nothing was saved.'; return; }
+    const mime = (rec.mimeType || type || 'video/webm').split(';')[0];
+    const ext = mime.includes('mp4') ? 'mp4' : 'webm';
+    const blob = new Blob(chunks, { type: mime });
+    if (lastUrl) URL.revokeObjectURL(lastUrl);
+    lastUrl = URL.createObjectURL(blob);
+    $('vid').src = lastUrl;
+    const dl = $('dl'); dl.href = lastUrl; dl.download = `school-erp-pr-film.${ext}`;
+    $('outinfo').textContent = `school-erp-pr-film.${ext} · ${(blob.size / 1048576).toFixed(1)} MB`;
+    $('out').hidden = false;
+    statusEl.textContent = 'Recording finished. Download it and drag the file into your GitHub pull request.';
+  };
+  recorder.start(500);
+}
+playBtn.addEventListener('click', () => { playing ? stop(true) : start(false); });
+big.addEventListener('click', () => start(false));
+recBtn.addEventListener('click', () => start(true));
+scrub.addEventListener('input', () => {
+  if (playing) stop(true);
+  big.hidden = true;
+  const t = +scrub.value; render(t); timeEl.textContent = `${fmt(t)} / ${fmt(DUR)}`;
+});
+
+/* Hook for offline rendering (frame-by-frame export). */
+window.__film = {
+  DUR,
+  frame(t, q) { render(t); return cv.toDataURL('image/jpeg', q || .93); },
+  async audioWav() {
+    const sr = 44100, oc = new OfflineAudioContext(2, sr * DUR, sr);
+    scheduleMusic(oc, [oc.destination], 0);
+    const buf = await oc.startRendering();
+    const n = buf.length, L = buf.getChannelData(0), R = buf.getChannelData(1);
+    const dv = new DataView(new ArrayBuffer(44 + n * 4));
+    const ws = (o, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
+    ws(0, 'RIFF'); dv.setUint32(4, 36 + n * 4, true); ws(8, 'WAVE'); ws(12, 'fmt ');
+    dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 2, true); dv.setUint32(24, sr, true);
+    dv.setUint32(28, sr * 4, true); dv.setUint16(32, 4, true); dv.setUint16(34, 16, true); ws(36, 'data'); dv.setUint32(40, n * 4, true);
+    for (let i = 0, o = 44; i < n; i++, o += 4) { dv.setInt16(o, clamp(L[i], -1, 1) * 32767, true); dv.setInt16(o + 2, clamp(R[i], -1, 1) * 32767, true); }
+    const bytes = new Uint8Array(dv.buffer); let bin = '';
+    for (let i = 0; i < bytes.length; i += 32768) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
+    return btoa(bin);
+  },
+};
+render(48);
+const fontsToLoad = [`800 64px "Bricolage Grotesque"`, `600 20px "Bricolage Grotesque"`, `400 40px Kalam`, `700 40px Kalam`, `400 18px Inter`, `600 18px Inter`, `400 40px "Noto Nastaliq Urdu"`];
+Promise.all(fontsToLoad.map(f => document.fonts.load(f, f.includes('Nastaliq') ? 'حاضری' : 'Aa').catch(() => {}))).then(() => { if (!playing) render(+scrub.value); });
+})();
+</script>
